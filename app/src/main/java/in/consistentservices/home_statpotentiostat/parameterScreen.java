@@ -1,10 +1,14 @@
 package in.consistentservices.home_statpotentiostat;
 
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
 
+import android.Manifest;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -38,6 +42,11 @@ public class parameterScreen extends AppCompatActivity
     private boolean voltFlag = false;
     private boolean currentFlag = false;
 
+    //Variables for Permission
+    protected static final int REQUEST_CHECK_SETTINGS = 0x1;
+    private static final int INITIAL_REQUEST = 1337;
+    private String[] Permissions = {android.Manifest.permission.WRITE_EXTERNAL_STORAGE};
+
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
@@ -49,6 +58,7 @@ public class parameterScreen extends AppCompatActivity
         ActionBar actionBar = getSupportActionBar();
         assert actionBar != null;
         actionBar.hide();
+        checkingPermission();
 
         next = (Button) findViewById(R.id.next);
 
@@ -79,6 +89,12 @@ public class parameterScreen extends AppCompatActivity
                 if(!voltFlag )
                 {
                     Toast.makeText(parameterScreen.this, "Please Select Voltage", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                if(!checkingPermission() )
+                {
+                    Toast.makeText(parameterScreen.this, "Please Grant Necessary Permission", Toast.LENGTH_SHORT).show();
                     return;
                 }
                 next();
@@ -172,5 +188,37 @@ public class parameterScreen extends AppCompatActivity
         super.onBackPressed();
         finishAffinity();
         System.exit(0);
+    }
+
+    //Checking Permission
+    private boolean checkingPermission()
+    {
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+        {
+            if(!canWriteExternalStorage())
+            {
+                requestPermissions(Permissions, INITIAL_REQUEST);
+                return false;
+            }
+
+            else
+            {
+                return true;
+            }
+        }
+
+        return true;
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.M)
+    private boolean canWriteExternalStorage()
+    {
+        return(hasPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE));
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.M)
+    private boolean hasPermission(String perm)
+    {
+        return(PackageManager.PERMISSION_GRANTED == checkSelfPermission(perm));
     }
 }

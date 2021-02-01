@@ -11,8 +11,10 @@ import android.bluetooth.BluetoothSocket;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.util.Log;
 import android.view.View;
@@ -25,11 +27,14 @@ import com.jjoe64.graphview.GridLabelRenderer;
 import com.jjoe64.graphview.series.DataPoint;
 import com.jjoe64.graphview.series.PointsGraphSeries;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
 
@@ -63,6 +68,7 @@ public class plottingScreen extends AppCompatActivity
     private GraphView chart;
     private PointsGraphSeries<DataPoint> xySeries;
     private ArrayList<XYValue> xyValueArray;
+    private boolean plottingFlag = true;
 
 
     @Override
@@ -147,6 +153,9 @@ public class plottingScreen extends AppCompatActivity
             @Override
             public void onClick(View view)
             {
+                plottingFlag = false;
+                chart.removeAllSeries();
+                plottingFlag = true;
             }
         });
 
@@ -155,6 +164,7 @@ public class plottingScreen extends AppCompatActivity
             @Override
             public void onClick(View view)
             {
+                saveGraph();
             }
         });
 
@@ -376,6 +386,11 @@ public class plottingScreen extends AppCompatActivity
 
     private void plotGraph(double i, double v)
     {
+        if(!plottingFlag)
+        {
+            return;
+        }
+
         xySeries = new PointsGraphSeries<>();
         xyValueArray.add(new XYValue(map(v, voltage), map(i, current)));
 
@@ -477,5 +492,47 @@ public class plottingScreen extends AppCompatActivity
     private double map(double x, double out_max)
     {
         return (x * out_max) / 4095.0;
+    }
+
+    private void saveGraph()
+    {
+        plottingFlag = false;
+        Bitmap bitmap = chart.takeSnapshot();
+        File root = new File(getExternalFilesDir(null), "Home Stat");
+        if (!root.exists())
+        {
+            root.mkdirs();
+        }
+        Random generator = new Random();
+        int n = 10000;
+        n = generator.nextInt(n);
+        String fname = "Image-" + n + ".jpg";
+        File file = new File(root, fname);
+        Log.d("BT_Deb_V_###", "" + file);
+
+        if (file.exists())
+        {
+            //noinspection ResultOfMethodCallIgnored
+            file.delete();
+        }
+
+        try
+        {
+            if (!file.exists())
+            {
+                file.createNewFile();
+            }
+
+            FileOutputStream out = new FileOutputStream(file);
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, out);
+            out.flush();
+            out.close();
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+            Log.d("BT_Deb_###", e.toString());
+        }
+        plottingFlag = true;
     }
 }
