@@ -1,0 +1,23 @@
+<resources>
+    <string name="app_name">Home-Stat Potentiostat</string>
+    <string name="_1_v">1 Volt</string>
+    <string name="_2_volt">2 Volt</string>
+    <string name="_3_volt">3 Volt</string>
+    <string name="_4_volt">4 Volt</string>
+    <string name="voltage_control">Voltage Control</string>
+    <string name="current_control">Current Control</string>
+    <string name="_100_ma">100 mA</string>
+    <string name="_500_ma">500 mA</string>
+    <string name="_2_ma">2 mA</string>
+    <string name="_5_ma">5 mA</string>
+    <string name="next">Next</string>
+    <string name="start">Start</string>
+    <string name="stop">Stop</string>
+    <string name="refresh">Refresh</string>
+    <string name="save">Save</string>
+    <string name="not_connected">Not Connected</string>
+    <string name="device_found">Device Found.</string>
+    <string name="connection_opened">Connection Opened</string>
+    <string name="settings_sent">Settings Sent</string>
+    <string name="scanning">Scanning</string>
+</resources>
