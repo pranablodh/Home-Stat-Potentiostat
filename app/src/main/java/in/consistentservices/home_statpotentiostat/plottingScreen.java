@@ -13,9 +13,11 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
+import android.os.StrictMode;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -82,6 +84,9 @@ public class plottingScreen extends AppCompatActivity
         ActionBar actionBar = getSupportActionBar();
         assert actionBar != null;
         actionBar.hide();
+
+        StrictMode.VmPolicy.Builder builder = new StrictMode.VmPolicy.Builder();
+        StrictMode.setVmPolicy(builder.build());
 
         Intent intent = getIntent();
         voltage = intent.getIntExtra("Volt", 4);
@@ -392,9 +397,9 @@ public class plottingScreen extends AppCompatActivity
         }
 
         xySeries = new PointsGraphSeries<>();
-        xyValueArray.add(new XYValue(map(v, voltage), map(i, current)));
+        xyValueArray.add(new XYValue(map(v, voltage, -voltage), map(i, current, -current)));
 
-        Log.d("BT_Deb_V_###", String.valueOf(map(v, voltage)));
+        Log.d("BT_Deb_V_###", String.valueOf(map(v, voltage, -voltage)));
 
         if(xyValueArray.size() == 0)
         {
@@ -403,10 +408,10 @@ public class plottingScreen extends AppCompatActivity
 
         try
         {
-            xySeries.appendData(new DataPoint(map(v, voltage), map(i, current)),true, 6000);
+            xySeries.appendData(new DataPoint(map(v, voltage, -voltage), map(i, current, -current)),true, 6000);
             xySeries.setShape(PointsGraphSeries.Shape.POINT);
             xySeries.setColor(Color.YELLOW);
-            xySeries.setSize(10f);
+            xySeries.setSize(1f);
 
             chart.getGridLabelRenderer().setGridStyle(GridLabelRenderer.GridStyle.BOTH);
             chart.getGridLabelRenderer().setNumHorizontalLabels(7);
@@ -414,11 +419,11 @@ public class plottingScreen extends AppCompatActivity
 
             chart.getViewport().setYAxisBoundsManual(true);
             chart.getViewport().setMaxY(current);
-            chart.getViewport().setMinY(0);
+            chart.getViewport().setMinY(-current);
 
             chart.getViewport().setXAxisBoundsManual(true);
             chart.getViewport().setMaxX(voltage);
-            chart.getViewport().setMinX(0);
+            chart.getViewport().setMinX(-voltage);
 
             chart.getGridLabelRenderer().setGridColor(Color.WHITE);
             chart.getGridLabelRenderer().setVerticalLabelsColor(Color.WHITE);
@@ -489,9 +494,9 @@ public class plottingScreen extends AppCompatActivity
         return array;
     }
 
-    private double map(double x, double out_max)
+    private double map(double x, double out_max, double out_min)
     {
-        return (x * out_max) / 4095.0;
+        return x * (out_max - out_min) / 4095.0 + out_min;
     }
 
     private void saveGraph()
@@ -527,11 +532,30 @@ public class plottingScreen extends AppCompatActivity
             bitmap.compress(Bitmap.CompressFormat.JPEG, 100, out);
             out.flush();
             out.close();
+            Toast.makeText(plottingScreen.this, "Graph Saved!", Toast.LENGTH_LONG).show();
         }
         catch (Exception e)
         {
             e.printStackTrace();
             Log.d("BT_Deb_###", e.toString());
+            Toast.makeText(plottingScreen.this, "Unable to Save Graph!", Toast.LENGTH_LONG).show();
+        }
+
+        try
+        {
+            Intent share = new Intent(Intent.ACTION_SEND);
+            share.setType("image/*");
+            share.putExtra(Intent.EXTRA_SUBJECT, "Share Graph");
+            share.putExtra(Intent.EXTRA_TEXT, "Hi, I'm sharing with you this Graph!");
+            share.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(file));
+            startActivity(Intent.createChooser(share,"Share via"));
+        }
+
+        catch (Exception e)
+        {
+            e.printStackTrace();
+            Log.d("BT_Deb_###", e.toString());
+            Toast.makeText(plottingScreen.this, "Unable to Share Graph!", Toast.LENGTH_LONG).show();
         }
         plottingFlag = true;
     }
